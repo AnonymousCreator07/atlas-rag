@@ -51,6 +51,8 @@ def main() -> None:
     memory = ConversationMemory(settings.memory_path, max_turns=settings.memory_max_turns)
     session_id = "workflow-eval"
     memory.clear(session_id)
+    memory.add(session_id, "user", "evaluation memory probe")
+    memory.add(session_id, "assistant", "stored answer [S1]")
     recalls, reciprocal_ranks, cases, answer_checks = [], [], [], []
 
     for row in rows:
