@@ -1,6 +1,7 @@
 """Persistent Chroma adapter; explicit embeddings keep query and index spaces aligned."""
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import chromadb
@@ -17,19 +18,40 @@ class ChromaStore:
             metadata={"hnsw:space": "cosine", "description": "Atlas RAG document chunks"},
         )
 
-    def upsert(self, ids: list[str], documents: list[str], embeddings: list[list[float]],
-               metadatas: list[dict[str, Any]]) -> None:
-        self.collection.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
+    def upsert(
+        self,
+        ids: list[str],
+        documents: list[str],
+        embeddings: list[list[float]],
+        metadatas: list[dict[str, Any]],
+    ) -> None:
+        self.collection.upsert(
+            ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas
+        )
 
     def query(self, embedding: list[float], top_k: int) -> list[dict[str, Any]]:
-        result = self.collection.query(query_embeddings=[embedding], n_results=top_k,
-                                       include=["documents", "metadatas", "distances"])
+        result = self.collection.query(
+            query_embeddings=[embedding],
+            n_results=top_k,
+            include=["documents", "metadatas", "distances"],
+        )
         rows = []
         for doc_id, document, metadata, distance in zip(
-            result["ids"][0], result["documents"][0], result["metadatas"][0], result["distances"][0]
+            result["ids"][0],
+            result["documents"][0],
+            result["metadatas"][0],
+            result["distances"][0],
+            strict=True,
         ):
-            rows.append({"id": doc_id, "document": document, "metadata": metadata,
-                         "distance": float(distance), "score": 1.0 - float(distance)})
+            rows.append(
+                {
+                    "id": doc_id,
+                    "document": document,
+                    "metadata": metadata,
+                    "distance": float(distance),
+                    "score": 1.0 - float(distance),
+                }
+            )
         return rows
 
     def delete_source(self, source_id: str) -> None:
@@ -40,8 +62,9 @@ class ChromaStore:
         grouped: dict[str, dict[str, Any]] = {}
         for metadata in result["metadatas"] or []:
             source_id = metadata["source_id"]
-            item = grouped.setdefault(source_id, {"source_id": source_id,
-                                                  "filename": metadata["filename"], "chunks": 0})
+            item = grouped.setdefault(
+                source_id, {"source_id": source_id, "filename": metadata["filename"], "chunks": 0}
+            )
             item["chunks"] += 1
         return sorted(grouped.values(), key=lambda item: item["filename"].lower())
 
@@ -51,7 +74,9 @@ class ChromaStore:
 
 @lru_cache
 def get_store(path: str, collection: str) -> ChromaStore:
-    settings = get_settings().model_copy(update={"chroma_path": path, "chroma_collection": collection})
+    settings = get_settings().model_copy(
+        update={"chroma_path": Path(path), "chroma_collection": collection}
+    )
     return ChromaStore(settings)
 
 
