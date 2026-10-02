@@ -1,6 +1,5 @@
 """Small persistent SQLite conversation-memory store."""
 
-import json
 import sqlite3
 from pathlib import Path
 
