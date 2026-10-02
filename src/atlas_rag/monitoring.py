@@ -6,7 +6,6 @@ from collections import Counter
 from threading import Lock
 from time import time
 
-
 logger = logging.getLogger("atlas_rag")
 
 
