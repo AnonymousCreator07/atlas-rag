@@ -1,5 +1,6 @@
 """Post-generation grounding and citation checks."""
 
+import json
 import re
 from typing import Any
 
@@ -52,13 +53,13 @@ Evidence:
 """
     response = OpenAI(api_key=settings.openai_api_key).chat.completions.create(
         model=settings.openai_chat_model,
-        messages=[{"role": "system", "content": "You are a strict factual grounding verifier."},
-                  {"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": "You are a strict factual grounding verifier."},
+            {"role": "user", "content": prompt},
+        ],
         temperature=0,
         response_format={"type": "json_object"},
     )
-    import json
-
     result = json.loads(response.choices[0].message.content or "{}")
     return bool(result.get("supported")), str(result.get("reason", ""))
 
