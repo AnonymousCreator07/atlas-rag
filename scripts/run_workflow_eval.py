@@ -80,8 +80,14 @@ def main() -> None:
                 row["question"], args.k, settings, embedder, store
             )
 
-        ranked = [item["metadata"]["source_id"] for item in hits]
-        first_rank = next((i + 1 for i, item in enumerate(hits) if item["metadata"]["source_id"] in relevant), None)
+        first_rank = next(
+            (
+                index + 1
+                for index, item in enumerate(hits)
+                if item["metadata"]["source_id"] in relevant
+            ),
+            None,
+        )
         reciprocal_rank = 1 / first_rank if first_rank else 0.0
         is_scored = bool(relevant)
         if is_scored:
@@ -160,7 +166,10 @@ def main() -> None:
         "limitations": [
             "Retrieval Recall/MRR measure source retrieval, not answer factuality.",
             "The out-of-corpus case is excluded from retrieval relevance metrics.",
-            "Expected answer facts are presented for human review; no automatic semantic answer score is claimed.",
+            (
+                "Expected answer facts are presented for human review; "
+                "no automatic semantic answer score is claimed."
+            ),
             "Generation and agentic reformulation require a configured OpenAI API key.",
         ],
     }
