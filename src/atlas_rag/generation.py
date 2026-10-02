@@ -11,9 +11,13 @@ the indexed documents. Cite each factual claim with the provided source marker, 
 [S1]. Never invent a citation or claim that you searched sources not shown here."""
 
 
-def generate_answer(question: str, sources: list[dict], settings: Settings) -> tuple[str, float, str]:
+def generate_answer(
+    question: str, sources: list[dict], settings: Settings
+) -> tuple[str, float, str]:
     if not settings.openai_api_key:
-        raise ValueError("Answer generation needs OPENAI_API_KEY. Indexing and retrieval work without it.")
+        raise ValueError(
+            "Answer generation needs OPENAI_API_KEY. Indexing and retrieval work without it."
+        )
     from openai import OpenAI
 
     excerpts = []
@@ -29,14 +33,24 @@ def generate_answer(question: str, sources: list[dict], settings: Settings) -> t
         if budget <= 0:
             break
     if not excerpts:
-        return "I don't know based on the indexed documents; no relevant excerpts were retrieved.", 0.0, settings.openai_chat_model
+        return (
+            "I don't know based on the indexed documents; no relevant excerpts were retrieved.",
+            0.0,
+            settings.openai_chat_model,
+        )
     prompt = f"Question: {question}\n\nReference excerpts:\n\n" + "\n\n".join(excerpts)
     start = perf_counter()
     response = OpenAI(api_key=settings.openai_api_key).chat.completions.create(
         model=settings.openai_chat_model,
-        messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
         temperature=0,
     )
     elapsed_ms = (perf_counter() - start) * 1000
-    answer = response.choices[0].message.content or "I could not produce an answer from the retrieved excerpts."
+    answer = (
+        response.choices[0].message.content
+        or "I could not produce an answer from the retrieved excerpts."
+    )
     return answer, elapsed_ms, settings.openai_chat_model

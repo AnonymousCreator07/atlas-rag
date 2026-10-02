@@ -44,5 +44,9 @@ def get_embedder(provider: str, model: str, api_key: str | None) -> Embedder:
 
 
 def configured_embedder(settings: Settings) -> Embedder:
-    model = settings.local_embedding_model if settings.embedding_provider == "local" else settings.openai_embedding_model
+    model = (
+        settings.local_embedding_model
+        if settings.embedding_provider == "local"
+        else settings.openai_embedding_model
+    )
     return get_embedder(settings.embedding_provider, model, settings.openai_api_key)

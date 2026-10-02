@@ -5,8 +5,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import Field, field_validator
-from pydantic_settings import NoDecode
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,7 +22,10 @@ class Settings(BaseSettings):
     chunk_overlap: int = Field(default=150, ge=0, le=5000)
     top_k: int = Field(default=5, ge=1, le=20)
     max_context_chars: int = Field(default=12000, ge=1000, le=100000)
-    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000", "http://127.0.0.1:8000"]
+    cors_origins: Annotated[list[str], NoDecode] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+    ]
 
     @field_validator("cors_origins", mode="before")
     @classmethod

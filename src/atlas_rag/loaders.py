@@ -27,8 +27,10 @@ def extract_pages(filename: str, content: bytes) -> list[PageText]:
         return [PageText(page=None, text=text)] if text else []
     if extension == ".pdf":
         reader = PdfReader(BytesIO(content), strict=False)
-        return [PageText(page=i + 1, text=(page.extract_text() or "").strip())
-                for i, page in enumerate(reader.pages)]
+        return [
+            PageText(page=i + 1, text=(page.extract_text() or "").strip())
+            for i, page in enumerate(reader.pages)
+        ]
     document = Document(BytesIO(content))
     text = "\n".join(p.text for p in document.paragraphs if p.text.strip()).strip()
     return [PageText(page=None, text=text)] if text else []
