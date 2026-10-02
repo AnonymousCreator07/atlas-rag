@@ -18,3 +18,9 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: ruff check .
       - run: pytest
+      - name: Run offline workflow evaluation
+        run: python scripts/run_workflow_eval.py --k 5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-rag-evaluation
+          path: evaluation/latest.json

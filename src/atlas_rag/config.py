@@ -16,12 +16,24 @@ class Settings(BaseSettings):
     embedding_provider: str = "local"
     openai_embedding_model: str = "text-embedding-3-small"
     local_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
     chroma_path: Path = Path(".data/chroma")
     chroma_collection: str = "atlas_documents"
+    memory_path: Path = Path(".data/memory.sqlite3")
     chunk_size: int = Field(default=900, ge=100, le=10000)
     chunk_overlap: int = Field(default=150, ge=0, le=5000)
     top_k: int = Field(default=5, ge=1, le=20)
+    retrieval_candidates: int = Field(default=20, ge=1, le=100)
     max_context_chars: int = Field(default=12000, ge=1000, le=100000)
+
+    reranker_enabled: bool = True
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    memory_enabled: bool = True
+    memory_max_turns: int = Field(default=8, ge=1, le=50)
+    grounding_check_enabled: bool = False
+    agentic_rag_enabled: bool = True
+    agentic_min_retrieval_score: float = Field(default=0.25, ge=-1.0, le=1.0)
+
     cors_origins: Annotated[list[str], NoDecode] = [
         "http://localhost:3000",
         "http://127.0.0.1:8000",

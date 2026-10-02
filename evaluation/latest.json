@@ -1,0 +1,263 @@
+{
+  "dataset": "data/eval.workflow.jsonl",
+  "dataset_cases": 9,
+  "retrieval_scored_cases": 8,
+  "unscored_out_of_corpus_cases": 1,
+  "corpus_documents": 3,
+  "ingestion": [
+    {
+      "filename": "deployment.md",
+      "source_id": "e1db37b675711a4e2f3897d5bf916f34d539de1def11b0dc874efb2fcff8d6f3",
+      "chunks_added": 1,
+      "pages_read": 1,
+      "status": "indexed"
+    },
+    {
+      "filename": "memory_grounding.md",
+      "source_id": "6f6ded7997124c0dbc29fe1c68d7330d9f579e0a7292525435e5bd2b52606e66",
+      "chunks_added": 1,
+      "pages_read": 1,
+      "status": "indexed"
+    },
+    {
+      "filename": "retrieval.md",
+      "source_id": "68622d4ed486addb4b52a2374802e280b38e0e1b7e075afb8f876aab98d4ecb1",
+      "chunks_added": 1,
+      "pages_read": 1,
+      "status": "indexed"
+    }
+  ],
+  "retrieval": {
+    "recall@5": 1,
+    "mrr": 1,
+    "cases": [
+      {
+        "question": "Which local embedding model and cross-encoder reranker are configured by default, and what does the retrieval score mean?",
+        "category": "retrieval",
+        "expected_filenames": [
+          "retrieval.md"
+        ],
+        "retrieved_filenames": [
+          "retrieval.md",
+          "memory_grounding.md",
+          "deployment.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "Which local embedding model and cross-encoder reranker are configured by default, and what does the retrieval score mean?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "all-MiniLM-L6-v2",
+          "ms-marco-MiniLM-L-6-v2",
+          "one minus cosine distance"
+        ]
+      },
+      {
+        "question": "Why must documents be re-indexed after changing embedding models?",
+        "category": "retrieval",
+        "expected_filenames": [
+          "retrieval.md"
+        ],
+        "retrieved_filenames": [
+          "retrieval.md",
+          "deployment.md",
+          "memory_grounding.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "Why must documents be re-indexed after changing embedding models?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "embedding spaces"
+        ]
+      },
+      {
+        "question": "How many passages does Atlas return by default?",
+        "category": "retrieval",
+        "expected_filenames": [
+          "retrieval.md"
+        ],
+        "retrieved_filenames": [
+          "retrieval.md",
+          "memory_grounding.md",
+          "deployment.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "How many passages does Atlas return by default?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "five"
+        ]
+      },
+      {
+        "question": "What upload formats and size limit does the API support?",
+        "category": "ingestion",
+        "expected_filenames": [
+          "deployment.md"
+        ],
+        "retrieved_filenames": [
+          "deployment.md",
+          "retrieval.md",
+          "memory_grounding.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "What upload formats and size limit does the API support?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "TXT",
+          "Markdown",
+          "PDF",
+          "DOCX",
+          "25 MB"
+        ]
+      },
+      {
+        "question": "Which endpoint removes a conversation session, and where is memory stored?",
+        "category": "memory",
+        "expected_filenames": [
+          "memory_grounding.md"
+        ],
+        "retrieved_filenames": [
+          "memory_grounding.md",
+          "deployment.md",
+          "retrieval.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "Which endpoint removes a conversation session, and where is memory stored?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "DELETE /sessions/{session_id}",
+          "SQLite"
+        ]
+      },
+      {
+        "question": "How does Atlas mark citations and respond when the grounding verifier rejects an answer?",
+        "category": "grounding",
+        "expected_filenames": [
+          "memory_grounding.md"
+        ],
+        "retrieved_filenames": [
+          "memory_grounding.md",
+          "retrieval.md",
+          "deployment.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "How does Atlas mark citations and respond when the grounding verifier rejects an answer?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "[S1]",
+          "grounded fallback"
+        ]
+      },
+      {
+        "question": "What security and operations controls are recommended before public deployment?",
+        "category": "deployment",
+        "expected_filenames": [
+          "deployment.md"
+        ],
+        "retrieved_filenames": [
+          "deployment.md",
+          "memory_grounding.md",
+          "retrieval.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "What security and operations controls are recommended before public deployment?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "TLS",
+          "authentication",
+          "rate limiting",
+          "backups"
+        ]
+      },
+      {
+        "question": "Do scanned PDFs receive OCR automatically?",
+        "category": "ingestion",
+        "expected_filenames": [
+          "deployment.md"
+        ],
+        "retrieved_filenames": [
+          "deployment.md",
+          "retrieval.md",
+          "memory_grounding.md"
+        ],
+        "retrieval_hit": true,
+        "reciprocal_rank": 1,
+        "retrieval_passes": 1,
+        "effective_query": "Do scanned PDFs receive OCR automatically?",
+        "should_abstain": false,
+        "expected_facts_for_human_review": [
+          "OCR"
+        ]
+      },
+      {
+        "question": "What is the exact price of the fictional Atlas Premium subscription?",
+        "category": "out_of_corpus",
+        "expected_filenames": [],
+        "retrieved_filenames": [
+          "deployment.md",
+          "memory_grounding.md",
+          "retrieval.md"
+        ],
+        "retrieval_hit": null,
+        "reciprocal_rank": null,
+        "retrieval_passes": 1,
+        "effective_query": "What is the exact price of the fictional Atlas Premium subscription?",
+        "should_abstain": true,
+        "expected_facts_for_human_review": []
+      }
+    ]
+  },
+  "memory_probe_passed": true,
+  "citation_probe": {
+    "valid": true,
+    "invalid_rejected": true,
+    "missing_rejected": true
+  },
+  "generation_cases": 0,
+  "generation_citation_validity": null,
+  "generation_grounded_rate": null,
+  "external_steps": {
+    "generation": "not_run_no_api_key",
+    "agentic_reformulation": "not_run_no_api_key",
+    "llm_grounding_verifier": "not_run_disabled_or_no_api_key"
+  },
+  "limitations": [
+    "Retrieval Recall/MRR measure source retrieval, not answer factuality.",
+    "The out-of-corpus case is excluded from retrieval relevance metrics.",
+    "Expected answer facts are presented for human review; no automatic semantic answer score is claimed.",
+    "Generation and agentic reformulation require a configured OpenAI API key."
+  ],
+  "run_metadata": {
+    "github_actions_run_id": 37062237492,
+    "github_actions_run_url": "https://github.com/AnonymousCreator07/atlas-rag/actions/runs/37062237492",
+    "source_commit": "1367caadb13dc661a67b453e910c8d8ff4b015b2",
+    "evaluated_at_utc": "2026-10-02",
+    "runtime": "GitHub Actions, Ubuntu 24.04, Python 3.12",
+    "configuration": {
+      "embedding_provider": "local",
+      "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "reranker_enabled": true,
+      "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "agentic_rag_enabled": true,
+      "openai_api_key_available": false,
+      "grounding_check_enabled": false
+    },
+    "ci_quality_checks": {
+      "ruff": "passed",
+      "pytest": "12 passed"
+    }
+  }
+}

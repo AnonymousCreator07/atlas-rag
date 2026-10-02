@@ -1,147 +1,198 @@
 # Atlas RAG
 
-**A practical, inspectable retrieval-augmented generation system.** Upload your notes, retrieve relevant passages, and ask grounded questions with source citations. The project is designed to be understandable enough to study and structured enough to extend.
-
-![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white) ![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white) ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-
-## What it does
-
-- Ingest `.txt`, `.md`, `.pdf`, and `.docx` files, with safe size/type checks and content-hash IDs.
-- Extract text, split it into bounded overlapping chunks, embed it, and persist vectors in Chroma.
-- Search semantically and return ranked passages with document, page, and similarity metadata.
-- Generate answers grounded in retrieved evidence and cite source markers such as `[S1]`.
-- Run embeddings locally on CPU by default; optionally use OpenAI embeddings and generation.
-- Inspect API contracts in interactive Swagger UI at `/docs`.
+An end-to-end, inspectable Retrieval-Augmented Generation system with production-oriented retrieval, reranking, conversational memory, grounding, evaluation, deployment, monitoring, and bounded agentic workflows.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  D[TXT / MD / PDF / DOCX] --> L[Load and extract]
-  L --> C[Chunk with overlap]
-  C --> E[Embedding provider]
-  E --> V[(Chroma persistent vector store)]
-  Q[Question] --> QE[Embed question]
-  QE --> R[Cosine similarity retrieval]
-  V --> R
-  R --> P[Bounded evidence context]
-  P --> G[LLM answer with source markers]
-  G --> A[Answer + ranked source excerpts]
-```
+~~~text
+Documents -> ingestion -> chunking -> embeddings -> Chroma
+Question -> dense retrieval -> cross-encoder reranking
+         -> bounded agentic reformulation when retrieval is weak
+         -> prompt construction + conversation memory
+         -> OpenAI API generation
+         -> citation validation + optional grounding verification
+         -> answer + source excerpts + metrics
+~~~
 
-### Request lifecycle
+## Requirements implemented
 
-1. **Ingestion** — The API validates the extension and 25 MB limit, extracts page-aware text, normalizes and chunks it, computes a SHA-256 document ID, embeds in batches, then upserts stable chunk IDs and metadata.
-2. **Retrieval** — A question is embedded using the same configured provider and searched in Chroma's cosine space. The service returns up to `top_k` passages, including a similarity score (`1 - cosine distance`).
-3. **Generation** — Retrieved excerpts are placed in a bounded context. The system prompt treats document text as untrusted input, asks for evidence-only answers, and requires citations. An unconfigured LLM fails clearly; ingestion and retrieval remain independently usable.
-
-The code is separated by responsibility: `loaders`, `chunking`, `embeddings`, `vector_store`, `ingestion`, `retrieval`, `generation`, and `api`. The evaluation script reports retrieval Recall@k and mean reciprocal rank (MRR) against a small labeled JSONL dataset.
+| Requirement | Implementation |
+|---|---|
+| Document ingestion | loaders.py + ingestion.py |
+| Chunking | chunking.py |
+| Embeddings | Sentence Transformers locally or OpenAI |
+| Vector database | Chroma |
+| Retrieval | Dense semantic retrieval |
+| Reranking | CrossEncoder |
+| Prompt construction | generation.py |
+| OpenAI API | generation.py, agent.py, grounding.py |
+| Conversational memory | SQLite session memory |
+| Evaluation | evaluate.py + evaluate_rag.py |
+| Hallucination handling | evidence-only prompting + grounding verifier + fallback |
+| Citations | [S1], [S2] markers + source metadata |
+| Deployment | Dockerfile + docker-compose.yml |
+| Monitoring | structured logs + /health + /metrics |
+| Agentic workflows | bounded retrieval/query-reformulation agent |
 
 ## Quick start
 
-Requires Python 3.11 or newer. Local embeddings download a model on first use and may take a few minutes. Answer generation requires an OpenAI API key.
+Requires Python 3.11+.
 
-```powershell
-cd atlas-rag
+~~~powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
 Copy-Item .env.example .env
-```
+~~~
 
-Add `OPENAI_API_KEY` to `.env` to enable generation. Then launch:
+Set OPENAI_API_KEY in .env to enable answer generation, then:
 
-```powershell
+~~~powershell
 uvicorn atlas_rag.api:app --reload
-```
+~~~
 
-Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs), upload a document to `POST /documents`, then ask a question at `POST /query`:
+Open http://127.0.0.1:8000/docs.
 
-```json
+Upload a document with POST /documents, then query POST /query:
+
+~~~json
 {
   "question": "Explain the key concept in my lecture notes",
-  "top_k": 5
+  "top_k": 5,
+  "session_id": "demo-session",
+  "use_agentic": true
 }
-```
+~~~
 
-The response includes the answer, cited source excerpts, cosine similarity scores, and separate retrieval and generation timings. Data persists under `.data/chroma/`.
+The response contains the generated answer, source excerpts, page/document metadata, dense scores, optional reranker scores, timings, grounding status, and retrieval-pass count.
 
-### Docker
+## Conversational memory
 
-```powershell
+Use the same session_id for follow-up questions. Memory is persisted in SQLite and bounded by MEMORY_MAX_TURNS.
+
+Clear a session with:
+
+~~~text
+DELETE /sessions/demo-session
+~~~
+
+## Retrieval and reranking
+
+The system retrieves RETRIEVAL_CANDIDATES dense candidates and then optionally reranks them using:
+
+~~~text
+cross-encoder/ms-marco-MiniLM-L-6-v2
+~~~
+
+The final TOP_K passages become the evidence context.
+
+## Agentic RAG
+
+The included agent is deliberately bounded. It does not execute arbitrary tools or privileged actions.
+
+When the first retrieval pass is weak, the agent can use the OpenAI model to reformulate the question and perform one additional retrieval/reranking pass. This makes the project demonstrate an agentic workflow without turning document text into executable instructions.
+
+## Hallucination and citation handling
+
+The generation prompt requires evidence-only answers and [S#] citations. Citation IDs are checked deterministically.
+
+Set GROUNDING_CHECK_ENABLED=true to perform an additional OpenAI verification call. If the verifier determines that the answer is not supported by the supplied evidence, Atlas returns a safe grounded fallback instead of presenting the unsupported answer.
+
+This is a mitigation layer, not a complete guarantee against hallucinations or prompt injection.
+
+## Monitoring
+
+The service provides:
+
+- GET /health for service/provider/index configuration
+- GET /metrics for request counts and latency
+- structured JSON log events for completed queries
+- retrieval-pass and grounding information per query
+
+For a distributed production deployment, replace the in-memory metrics with Prometheus/OpenTelemetry or another persistent observability backend.
+
+## Evaluation
+
+A labeled workflow corpus and reproducible runner are included:
+
+~~~powershell
+python scripts/run_workflow_eval.py --k 5
+~~~
+
+The runner ingests three evaluation documents, chunks and embeds them, indexes them in Chroma, then measures retrieval Recall@k/MRR after reranking and the bounded agent retrieval path. It also probes SQLite memory and deterministic citation validation. With OPENAI_API_KEY configured it exercises the full query path and saves answers, citation validity, and grounding status for human review. Without credentials it records generation and LLM-assisted reformulation as unavailable; it does not invent answer scores.
+
+Nine questions cover retrieval, ingestion, deployment, memory, citation/grounding, and an out-of-corpus abstention case. The out-of-corpus item is excluded from retrieval relevance metrics. Expected facts are review guidance, not automatically scored answer truth.
+
+Results are written to evaluation/latest.json with per-question details. See [evaluation/README.md](evaluation/README.md) for setup and interpretation. The corpus is intentionally small and is a reproducible smoke evaluation, not a production benchmark.
+
+## Docker deployment
+
+~~~powershell
 Copy-Item .env.example .env
-# Set OPENAI_API_KEY in .env, then:
 docker compose up --build
-```
+~~~
 
-The named Docker volume keeps the vector store between container restarts.
+The Compose configuration persists Chroma and SQLite memory in a named volume.
+
+For public deployment, add TLS, authentication/authorization, rate limiting, secret management, restricted CORS, encrypted storage, backups, malware scanning, tenant isolation, and persistent observability.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | unset | Enables answer generation; also required for OpenAI embeddings. |
-| `OPENAI_CHAT_MODEL` | `gpt-4o-mini` | Chat completion model. |
-| `EMBEDDING_PROVIDER` | `local` | `local` CPU model or `openai`. Keep consistent across indexing and querying. |
-| `LOCAL_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | Sentence Transformers model. |
-| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model. |
-| `CHROMA_PATH` | `.data/chroma` | Persistent vector database directory. |
-| `CHUNK_SIZE` / `CHUNK_OVERLAP` | `900` / `150` | Chunk size and overlap in characters. |
-| `TOP_K` | `5` | Number of passages retrieved by default. |
-| `MAX_CONTEXT_CHARS` | `12000` | Maximum excerpt characters sent to the generator. |
-| `CORS_ORIGINS` | local development origins | Comma-separated browser origins allowed to call the API. |
+| OPENAI_API_KEY | unset | OpenAI generation and optional agent/grounding calls |
+| OPENAI_CHAT_MODEL | gpt-4o-mini | Generation/verifier model |
+| EMBEDDING_PROVIDER | local | local or openai embeddings |
+| LOCAL_EMBEDDING_MODEL | sentence-transformers/all-MiniLM-L6-v2 | Local embedding model |
+| OPENAI_EMBEDDING_MODEL | text-embedding-3-small | OpenAI embedding model |
+| CHROMA_PATH | .data/chroma | Vector store |
+| MEMORY_PATH | .data/memory.sqlite3 | Conversation memory |
+| CHUNK_SIZE / CHUNK_OVERLAP | 900 / 150 | Chunking |
+| TOP_K | 5 | Final evidence count |
+| RETRIEVAL_CANDIDATES | 20 | Candidates before reranking |
+| MAX_CONTEXT_CHARS | 12000 | LLM context budget |
+| RERANKER_ENABLED | true | Cross-encoder reranking |
+| RERANKER_MODEL | cross-encoder/ms-marco-MiniLM-L-6-v2 | Reranker model |
+| MEMORY_ENABLED | true | Session memory |
+| MEMORY_MAX_TURNS | 8 | Memory limit |
+| GROUNDING_CHECK_ENABLED | false | Optional LLM grounding verification |
+| AGENTIC_RAG_ENABLED | true | Bounded query reformulation |
+| AGENTIC_MIN_RETRIEVAL_SCORE | 0.25 | Agent trigger threshold |
 
-Changing embedding models requires re-indexing the corpus: vector dimensions and semantic spaces must match.
-
-## API reference
-
-| Method | Path | Behavior |
-|---|---|---|
-| `GET` | `/health` | API status, indexed chunk count, providers. |
-| `POST` | `/documents` | Multipart upload (`file` field); returns content hash and chunk count. |
-| `GET` | `/documents` | List indexed files and chunk counts. |
-| `DELETE` | `/documents/{source_id}` | Remove all chunks for a SHA-256 document ID. |
-| `POST` | `/query` | JSON question with optional `top_k`; returns answer and evidence. |
-| `GET` | `/docs` | Interactive OpenAPI documentation. |
-
-## Evaluation and development
-
-The sample evaluation set is a template. Replace its example source IDs with IDs returned by `POST /documents`, and write questions whose relevant documents you know. Then run:
-
-```powershell
-python scripts/evaluate.py --dataset data/eval.sample.jsonl --k 5
-pytest
-ruff check .
-```
-
-`Recall@k` measures whether any labeled relevant document appears in the top *k*. `MRR` rewards a relevant document appearing near the top. These retrieval metrics do not measure answer faithfulness; add human-reviewed answer/grounding examples before comparing generation changes.
-
-## Engineering decisions and limits
-
-- **Local-first retrieval:** Chroma and a CPU embedding model make indexing and search possible without a paid API. The model is downloaded from Hugging Face on first use.
-- **Replaceable providers:** Embedding and storage boundaries are explicit so students can compare local and hosted models or swap vector databases.
-- **Traceable answers:** The API returns evidence excerpts and scores alongside citations; users can inspect why a response was produced.
-- **Deliberate scope:** This reference implementation uses dense retrieval only. It does not include OCR, hybrid keyword search, reranking, authentication, tenant isolation, streaming, or production observability.
-- **Production considerations:** Add authentication and authorization, rate and upload limits at a reverse proxy, malware scanning, encrypted storage, request tracing, retention/deletion policy, backups, and evaluation gates before exposing user data or deploying publicly. Configure CORS to only trusted origins.
-- **Prompt injection:** The generation prompt treats retrieved passages as untrusted data, but prompting alone is not a security boundary. Do not grant the model tools that can perform privileged actions based on document text.
-
-## Troubleshooting
-
-- **`OPENAI_API_KEY` required:** Set it in `.env` and restart the server; local embedding and retrieval can run without it, but answer generation cannot.
-- **PDF has no text:** Scanned/image-only PDFs need OCR before this text-extraction pipeline can index them.
-- **Slow first query:** The local embedding model downloads and initializes on first use.
-- **No relevant results:** Re-index after changing embedding providers/models; tune chunk size, overlap, and `top_k` against a labeled evaluation set.
+Changing embedding models requires re-indexing the corpus.
 
 ## Repository layout
 
-```text
-src/atlas_rag/    API, ingestion, retrieval, providers, schemas
-tests/            Chunking and document-loader tests
-scripts/           Retrieval evaluation utility
-data/              Evaluation dataset template
-.github/workflows/ CI for lint and tests
-```
+~~~text
+src/atlas_rag/
+  api.py             FastAPI routes
+  agent.py           bounded agentic retrieval
+  chunking.py        deterministic chunking
+  embeddings.py      local/OpenAI embedding providers
+  generation.py      OpenAI generation and prompt construction
+  grounding.py       citation and grounding verification
+  ingestion.py       ingestion orchestration
+  loaders.py         TXT/MD/PDF/DOCX extraction
+  memory.py          SQLite conversational memory
+  monitoring.py      structured logs and metrics
+  reranking.py       cross-encoder reranking
+  retrieval.py       end-to-end query orchestration
+  schemas.py         API contracts
+  vector_store.py    Chroma adapter
 
-## License
+scripts/
+  evaluate.py
+  evaluate_rag.py
 
-MIT. See [LICENSE](LICENSE).
+tests/
+  chunking, loaders, memory, grounding, and reranking tests
+~~~
+
+Run the test suite and linter with:
+
+~~~powershell
+pytest
+ruff check .
+~~~
+
+MIT License.

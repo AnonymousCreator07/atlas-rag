@@ -1,0 +1,37 @@
+{
+  "status": "offline_evaluation_completed",
+  "branch": "feature/production-rag",
+  "observed_at": "2026-10-03",
+  "local_runtime": {
+    "python": "3.12.14",
+    "project_dependencies_available": false,
+    "openai_api_key_available": false
+  },
+  "github_actions_run": {
+    "id": 37062237492,
+    "url": "https://github.com/AnonymousCreator07/atlas-rag/actions/runs/37062237492",
+    "conclusion": "success",
+    "ruff": "passed",
+    "pytest": "12 passed",
+    "workflow_evaluation": "passed"
+  },
+  "metrics": {
+    "recall_at_5": 1,
+    "mrr": 1,
+    "scored_retrieval_cases": 8,
+    "total_cases": 9,
+    "corpus_documents": 3,
+    "memory_probe_passed": true,
+    "citation_probe": {
+      "valid": true,
+      "invalid_rejected": true,
+      "missing_rejected": true
+    }
+  },
+  "unavailable": {
+    "openai_generation": "not run; OPENAI_API_KEY was absent",
+    "agentic_reformulation": "not run; OPENAI_API_KEY was absent",
+    "llm_grounding_verifier": "not run; disabled and no API key"
+  },
+  "note": "The 1.0 retrieval scores are for this three-document smoke corpus only and are not evidence of general answer accuracy. See latest.json for per-case results."
+}

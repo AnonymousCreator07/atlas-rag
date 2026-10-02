@@ -1,0 +1,9 @@
+{"question":"Which local embedding model and cross-encoder reranker are configured by default, and what does the retrieval score mean?","relevant_filenames":["retrieval.md"],"category":"retrieval","expected_facts":["all-MiniLM-L6-v2","ms-marco-MiniLM-L-6-v2","one minus cosine distance"]}
+{"question":"Why must documents be re-indexed after changing embedding models?","relevant_filenames":["retrieval.md"],"category":"retrieval","expected_facts":["embedding spaces"]}
+{"question":"How many passages does Atlas return by default?","relevant_filenames":["retrieval.md"],"category":"retrieval","expected_facts":["five"]}
+{"question":"What upload formats and size limit does the API support?","relevant_filenames":["deployment.md"],"category":"ingestion","expected_facts":["TXT","Markdown","PDF","DOCX","25 MB"]}
+{"question":"Which endpoint removes a conversation session, and where is memory stored?","relevant_filenames":["memory_grounding.md"],"category":"memory","expected_facts":["DELETE /sessions/{session_id}","SQLite"]}
+{"question":"How does Atlas mark citations and respond when the grounding verifier rejects an answer?","relevant_filenames":["memory_grounding.md"],"category":"grounding","expected_facts":["[S1]","grounded fallback"]}
+{"question":"What security and operations controls are recommended before public deployment?","relevant_filenames":["deployment.md"],"category":"deployment","expected_facts":["TLS","authentication","rate limiting","backups"]}
+{"question":"Do scanned PDFs receive OCR automatically?","relevant_filenames":["deployment.md"],"category":"ingestion","expected_facts":["OCR"],"should_answer":"no"}
+{"question":"What is the exact price of the fictional Atlas Premium subscription?","relevant_filenames":[],"category":"out_of_corpus","expected_facts":[],"should_abstain":true}
