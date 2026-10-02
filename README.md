@@ -113,21 +113,17 @@ For a distributed production deployment, replace the in-memory metrics with Prom
 
 ## Evaluation
 
-Original retrieval evaluation remains available:
+A labeled workflow corpus and reproducible runner are included:
 
 ~~~powershell
-python scripts/evaluate.py --dataset data/eval.sample.jsonl --k 5
+python scripts/run_workflow_eval.py --k 5
 ~~~
 
-Extended evaluation:
+The runner ingests three evaluation documents, chunks and embeds them, indexes them in Chroma, then measures retrieval Recall@k/MRR after reranking and the bounded agent retrieval path. It also probes SQLite memory and deterministic citation validation. With OPENAI_API_KEY configured it exercises the full query path and saves answers, citation validity, and grounding status for human review. Without credentials it records generation and LLM-assisted reformulation as unavailable; it does not invent answer scores.
 
-~~~powershell
-python scripts/evaluate_rag.py --dataset data/eval.sample.jsonl --k 5
-~~~
+Nine questions cover retrieval, ingestion, deployment, memory, citation/grounding, and an out-of-corpus abstention case. The out-of-corpus item is excluded from retrieval relevance metrics. Expected facts are review guidance, not automatically scored answer truth.
 
-The evaluator reports Recall@k and MRR and can also check citation validity for recorded answers.
-
-For serious evaluation, maintain a human-reviewed dataset covering retrieval relevance, answer faithfulness, citation correctness, refusal/no-evidence behavior, and prompt-injection cases.
+Results are written to evaluation/latest.json with per-question details. See [evaluation/README.md](evaluation/README.md) for setup and interpretation. The corpus is intentionally small and is a reproducible smoke evaluation, not a production benchmark.
 
 ## Docker deployment
 
