@@ -1,30 +1,37 @@
 {
-  "status": "not_executed_in_caller_runtime",
+  "status": "offline_evaluation_completed",
   "branch": "feature/production-rag",
   "observed_at": "2026-10-03",
   "local_runtime": {
     "python": "3.12.14",
-    "installed_project_dependencies": [
-      "pypdf"
-    ],
-    "missing_for_rag_pipeline": [
-      "chromadb",
-      "sentence-transformers",
-      "fastapi",
-      "pydantic-settings",
-      "openai"
-    ],
-    "openai_api_key_available": false,
-    "full_pipeline_metrics": null
+    "project_dependencies_available": false,
+    "openai_api_key_available": false
   },
-  "checks_performed": {
-    "workflow_evaluator_python_syntax": "passed",
-    "evaluation_jsonl_parse": "passed",
-    "evaluation_cases": 9,
-    "retrieval_scored_cases": 8,
-    "out_of_corpus_cases": 1
+  "github_actions_run": {
+    "id": 37062237492,
+    "url": "https://github.com/AnonymousCreator07/atlas-rag/actions/runs/37062237492",
+    "conclusion": "success",
+    "ruff": "passed",
+    "pytest": "12 passed",
+    "workflow_evaluation": "passed"
   },
-  "reason": "The caller runtime does not have the project dependencies installed, so ingestion, embeddings, Chroma, reranking, memory integration, or generation could not be run here. The local clone attempt also failed because the Git HTTPS helper is unavailable/crashed; branch updates were made through the connected GitHub integration.",
-  "next_command": "python scripts/run_workflow_eval.py --k 5",
-  "interpretation": "No Recall@k, MRR, generation, or grounding result is claimed by this status file. Run the command in a provisioned environment; it writes evaluation/latest.json."
+  "metrics": {
+    "recall_at_5": 1,
+    "mrr": 1,
+    "scored_retrieval_cases": 8,
+    "total_cases": 9,
+    "corpus_documents": 3,
+    "memory_probe_passed": true,
+    "citation_probe": {
+      "valid": true,
+      "invalid_rejected": true,
+      "missing_rejected": true
+    }
+  },
+  "unavailable": {
+    "openai_generation": "not run; OPENAI_API_KEY was absent",
+    "agentic_reformulation": "not run; OPENAI_API_KEY was absent",
+    "llm_grounding_verifier": "not run; disabled and no API key"
+  },
+  "note": "The 1.0 retrieval scores are for this three-document smoke corpus only and are not evidence of general answer accuracy. See latest.json for per-case results."
 }
