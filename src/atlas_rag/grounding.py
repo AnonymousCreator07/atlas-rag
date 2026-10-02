@@ -6,7 +6,6 @@ from typing import Any
 
 from atlas_rag.config import Settings
 
-
 CITATION_RE = re.compile(r"\[S(\d+)\]")
 
 
