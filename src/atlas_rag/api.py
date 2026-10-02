@@ -28,7 +28,9 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="Atlas RAG API",
     version="0.2.0",
-    description="Production-oriented document ingestion, retrieval, reranking, memory, and cited answers.",
+    description=(
+        "Production-oriented document ingestion, retrieval, reranking, memory, and cited answers."
+    ),
     lifespan=lifespan,
 )
 app.add_middleware(
