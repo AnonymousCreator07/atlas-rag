@@ -8,23 +8,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from atlas_rag.config import get_settings
 from atlas_rag.embeddings import configured_embedder
 from atlas_rag.ingestion import MAX_UPLOAD_BYTES, ingest_document
+from atlas_rag.memory import ConversationMemory
+from atlas_rag.monitoring import configure_logging, metrics
 from atlas_rag.retrieval import answer_question
 from atlas_rag.schemas import DocumentItem, IngestResponse, QueryRequest, QueryResponse
 from atlas_rag.vector_store import configured_store
 
 settings = get_settings()
+memory = ConversationMemory(settings.memory_path, settings.memory_max_turns)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     settings.chroma_path.mkdir(parents=True, exist_ok=True)
+    configure_logging()
     yield
 
 
 app = FastAPI(
     title="Atlas RAG API",
-    version="0.1.0",
-    description="Document ingestion, semantic retrieval, and cited answers.",
+    version="0.2.0",
+    description="Production-oriented document ingestion, retrieval, reranking, memory, and cited answers.",
     lifespan=lifespan,
 )
 app.add_middleware(
@@ -43,7 +47,16 @@ def health() -> dict:
         "indexed_chunks": configured_store(settings).count(),
         "embedding_provider": settings.embedding_provider,
         "generation_configured": bool(settings.openai_api_key),
+        "reranker_enabled": settings.reranker_enabled,
+        "memory_enabled": settings.memory_enabled,
+        "grounding_check_enabled": settings.grounding_check_enabled,
+        "agentic_rag_enabled": settings.agentic_rag_enabled,
     }
+
+
+@app.get("/metrics", tags=["system"])
+def metrics_endpoint() -> dict:
+    return metrics.snapshot()
 
 
 @app.post("/documents", response_model=IngestResponse, tags=["documents"])
@@ -91,6 +104,9 @@ def query(request: QueryRequest) -> dict:
             settings,
             configured_embedder(settings),
             store,
+            memory if settings.memory_enabled else None,
+            request.session_id,
+            request.use_agentic,
         )
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -98,3 +114,9 @@ def query(request: QueryRequest) -> dict:
         raise HTTPException(
             status_code=502, detail="Query failed. Check provider configuration and server logs."
         ) from exc
+
+
+@app.delete("/sessions/{session_id}", tags=["sessions"])
+def clear_session(session_id: str) -> dict:
+    memory.clear(session_id)
+    return {"cleared": session_id}
